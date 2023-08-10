@@ -22,6 +22,7 @@ fn main() {
     let raw_data = read_file(&conf.manifest);
     let use_git = conf.git_tag;
     let run_build = conf.run_build;
+    let prefix = conf.prefix;
 
     if use_git {
         git::git_check();
@@ -42,7 +43,7 @@ fn main() {
     }
 
     if use_git {
-        git::git_commit_and_tag(version);
+        git::git_commit_and_tag(&format!("{}{}", prefix, version));
     }
 }
 

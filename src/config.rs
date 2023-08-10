@@ -73,6 +73,13 @@ fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
                 .help("Optional run `cargo build` before handling any git logic.
                 This has the added benefit of fixing the Cargo.lock before the git commits are made."),
         )
+        .arg(
+            Arg::with_name("tag-prefix")
+                .short("t")
+                .long("tag-prefix")
+                .takes_value(true)
+                .help("Optional prefix to the git-tag, this will force the git-tag option"),
+        )
 }
 
 pub struct Config {
@@ -80,6 +87,7 @@ pub struct Config {
     pub manifest: PathBuf,
     pub git_tag: bool,
     pub run_build: bool,
+    pub prefix: String,
 }
 
 impl Config {
@@ -88,8 +96,15 @@ impl Config {
             .expect("Invalid semver version, expected version or major, minor, patch");
         let build_metadata = matches.value_of("build-metadata").map(parse_identifiers);
         let pre_release = matches.value_of("pre-release").map(parse_identifiers);
-        let git_tag = matches.is_present("git-tag");
         let run_build = matches.is_present("run-build");
+        let mut git_tag = matches.is_present("git-tag");
+        let prefix = match matches.value_of("tag-prefix") {
+            Some(prefix) => {
+                git_tag = true;
+                prefix.to_string()
+            }
+            None => "".to_string(),
+        };
         let mut metadata_cmd = MetadataCommand::new();
         if let Some(path) = matches.value_of("manifest-path") {
             metadata_cmd.manifest_path(path);
@@ -107,6 +122,7 @@ impl Config {
                     .clone(),
                 git_tag,
                 run_build,
+                prefix,
             }
         } else {
             panic!("Workspaces are not supported yet.");
