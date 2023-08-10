@@ -86,6 +86,7 @@ fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Config {
     pub version_modifier: VersionModifier,
     pub manifest: PathBuf,
@@ -93,6 +94,33 @@ pub struct Config {
     pub run_build: bool,
     pub prefix: String,
     pub ignore_lockfile: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let mut metadata_cmd = MetadataCommand::new();
+        let metadata = metadata_cmd.exec().expect("get cargo metadata");
+        let manifest = metadata[metadata
+            .workspace_members
+            .first()
+            .expect("get workspace members")]
+        .manifest_path
+        .to_owned();
+        let version_modifier = VersionModifier {
+            mod_type: ModifierType::Patch,
+            build_metadata: None,
+            pre_release: None,
+        };
+
+        Config {
+            version_modifier,
+            manifest,
+            git_tag: false,
+            run_build: false,
+            prefix: "".into(),
+            ignore_lockfile: false,
+        }
+    }
 }
 
 impl Config {
@@ -150,7 +178,7 @@ fn parse_identifiers(value: &str) -> Vec<Identifier> {
         .collect()
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ModifierType {
     Replace(Version),
     Major,
@@ -170,7 +198,7 @@ impl FromStr for ModifierType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VersionModifier {
     pub mod_type: ModifierType,
     pub build_metadata: Option<Vec<Identifier>>,
