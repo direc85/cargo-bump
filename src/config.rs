@@ -64,14 +64,7 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let metadata_cmd = MetadataCommand::new();
-        let metadata = metadata_cmd.exec().expect("get cargo metadata");
-        let manifest = metadata[metadata
-            .workspace_members
-            .first()
-            .expect("get workspace members")]
-            .manifest_path
-            .to_owned();
+        let manifest = Config::get_manifest(None);
         let version_modifier = VersionModifier {
             mod_type: ModifierType::Patch,
             build_metadata: None,
@@ -80,7 +73,7 @@ impl Default for Config {
 
         Config {
             version_modifier,
-            manifest: manifest.into(),
+            manifest,
             git_tag: false,
             run_build: false,
             prefix: "".into(),
@@ -134,29 +127,37 @@ impl Config {
             None => "".to_string(),
         };
         let ignore_lockfile = arguments.ignore_lockfile.unwrap_or(false);
+        let manifest = Config::get_manifest(arguments.manifest_path);
+
+        Config {
+            version_modifier: VersionModifier {
+                mod_type,
+                build_metadata,
+                pre_release,
+            },
+            manifest,
+            git_tag,
+            run_build,
+            prefix,
+            ignore_lockfile,
+        }
+    }
+
+    fn get_manifest(path: Option<String>) -> PathBuf {
         let mut metadata_cmd = MetadataCommand::new();
-        if let Some(path) = arguments.manifest_path {
+        if let Some(path) = path {
             metadata_cmd.manifest_path(path);
         }
         let metadata = metadata_cmd.exec().expect("get cargo metadata");
-        if metadata.workspace_members.len() == 1 {
-            Config {
-                version_modifier: VersionModifier {
-                    mod_type,
-                    build_metadata,
-                    pre_release,
-                },
-                manifest: metadata[&metadata.workspace_members[0]]
-                    .manifest_path
-                    .clone(),
-                git_tag,
-                run_build,
-                prefix,
-                ignore_lockfile,
-            }
-        } else {
-            panic!("Workspaces are not supported yet.");
+        if metadata.workspace_members.len() > 1 {
+            eprintln!("Workspaces are not supported yet.");
+            std::process::exit(1);
         }
+        let workspace = metadata
+            .workspace_members
+            .first()
+            .expect("get workspace members");
+        metadata[workspace].manifest_path.clone().into()
     }
 }
 
