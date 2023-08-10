@@ -89,8 +89,11 @@ fn update_toml_with_version(raw_data: &str, version_modifier: config::VersionMod
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use super::*;
     use config::{ModifierType, VersionModifier};
+    use semver::{BuildMetadata, Prerelease};
 
     fn toml_test_wrapper(
         template: &str,
@@ -140,12 +143,13 @@ version = $VERSION";
             "1.0.0",
             "2.0.0",
         );
-        let version_mod = VersionModifier::new(ModifierType::Major, Some("RC"), None);
+        let version_mod =
+            VersionModifier::new(ModifierType::Major, Prerelease::from_str("RC").ok(), None);
         toml_test_wrapper(input, version_mod, "1.0.0", "2.0.0-RC");
         let version_mod = VersionModifier::new(
             ModifierType::Major,
             None,
-            Some("ac44f1f8f31acf4728bd2055d716776b"),
+            BuildMetadata::from_str("ac44f1f8f31acf4728bd2055d716776b").ok(),
         );
         toml_test_wrapper(
             input,
@@ -153,7 +157,11 @@ version = $VERSION";
             "1.0.0",
             "2.0.0+ac44f1f8f31acf4728bd2055d716776b",
         );
-        let version_mod = VersionModifier::new(ModifierType::Major, Some("alpha"), Some("2230"));
+        let version_mod = VersionModifier::new(
+            ModifierType::Major,
+            Prerelease::from_str("alpha").ok(),
+            BuildMetadata::from_str("2230").ok(),
+        );
         toml_test_wrapper(input, version_mod, "1.0.0", "2.0.0-alpha+2230");
     }
 

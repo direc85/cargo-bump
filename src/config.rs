@@ -1,6 +1,6 @@
 use cargo_metadata::MetadataCommand;
 use clap::{ArgAction, Parser};
-use semver::{Identifier, SemVerError, Version};
+use semver::{BuildMetadata, Error as SemVerError, Prerelease, Version};
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -170,7 +170,7 @@ pub enum ModifierType {
 
 impl FromStr for ModifierType {
     type Err = SemVerError;
-    fn from_str(input: &str) -> Result<ModifierType, Self::Err> {
+    fn from_str(input: &str) -> Result<ModifierType, SemVerError> {
         Ok(match input {
             "major" => ModifierType::Major,
             "minor" => ModifierType::Minor,
@@ -183,21 +183,21 @@ impl FromStr for ModifierType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct VersionModifier {
     pub mod_type: ModifierType,
-    pub build_metadata: Option<Vec<Identifier>>,
-    pub pre_release: Option<Vec<Identifier>>,
+    pub build_metadata: Option<BuildMetadata>,
+    pub pre_release: Option<Prerelease>,
 }
 
 impl VersionModifier {
     #[allow(unused)]
     pub fn new(
         mod_type: ModifierType,
-        pre_release: Option<&str>,
-        build_metadata: Option<&str>,
+        pre_release: Option<Prerelease>,
+        build_metadata: Option<BuildMetadata>,
     ) -> Self {
         Self {
             mod_type,
-            build_metadata: build_metadata.map(parse_identifiers),
-            pre_release: pre_release.map(parse_identifiers),
+            build_metadata,
+            pre_release,
         }
     }
 

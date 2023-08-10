@@ -1,26 +1,31 @@
-use config::{ModifierType, VersionModifier};
-use semver::Version;
+use std::str::FromStr;
 
-pub fn update_version(old: &mut Version, by: VersionModifier) {
-    match by.mod_type {
+use config::{ModifierType, VersionModifier};
+use semver::{Prerelease, Version};
+
+pub fn update_version(version: &mut Version, modifier: VersionModifier) {
+    match modifier.mod_type {
         ModifierType::Replace(v) => {
-            *old = v;
+            *version = v;
         }
         ModifierType::Major => {
-            old.increment_major();
+            version.major += 1;
+            version.minor = 0;
+            version.patch = 0;
         }
         ModifierType::Minor => {
-            old.increment_minor();
+            version.minor += 1;
+            version.patch = 0;
         }
         ModifierType::Patch => {
-            old.increment_patch();
+            version.patch += 1;
         }
     }
 
-    if let Some(pre) = by.pre_release {
-        old.pre = pre;
+    if let Some(pre) = modifier.pre_release {
+        version.pre = Prerelease::from_str(&pre).unwrap();
     }
-    if let Some(build) = by.build_metadata {
-        old.build = build;
+    if let Some(build) = modifier.build_metadata {
+        version.build = build;
     }
 }
