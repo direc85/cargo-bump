@@ -14,7 +14,9 @@ version = "1.1.0"
 travis-ci = {repository = "wraithan/cargo-bump", branch = "master" }
 
 [dependencies]
-clap = "2.26.0"
-semver = "0.9.0"
-toml_edit = "0.1.5"
-cargo_metadata = "0.7.0"
+clap = { version = "3.2.25", features = ["derive"] }
+semver = "1.0.18"
+toml_edit = "0.14.4"
+cargo_metadata = "0.17.0"
+
+once_cell = "=1.17.2"
