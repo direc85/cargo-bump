@@ -97,7 +97,7 @@ pub struct Config {
 
 impl Config {
     fn from_matches(matches: ArgMatches) -> Config {
-        let mod_type = ModifierType::from_str(matches.value_of("version").unwrap_or("patch"))
+        let mod_type = ModifierType::from_str(matches.value_of("VERSION").unwrap_or("patch"))
             .expect("Invalid semver version, expected version or major, minor, patch");
         let build_metadata = matches.value_of("build-metadata").map(parse_identifiers);
         let pre_release = matches.value_of("pre-release").map(parse_identifiers);
