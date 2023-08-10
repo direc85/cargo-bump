@@ -34,7 +34,7 @@ USAGE:
 FLAGS:
     -g, --git-tag     Optional commit the updated version and create a git tag.
     -h, --help        Prints help information
-    -r, --run-buid    Optional run `cargo build` before handling any git logic.
+    -r, --run-build   Optional run `cargo build` before handling any git logic.
                                       This has the added benefit of fixing the Cargo.lock before the git commits are
                       made.
     -v, --version     Prints version information

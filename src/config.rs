@@ -69,7 +69,7 @@ fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
         .arg(
             Arg::with_name("run-build")
                 .short("r")
-                .long("run-buid")
+                .long("run-build")
                 .help("Optional run `cargo build` before handling any git logic.
                 This has the added benefit of fixing the Cargo.lock before the git commits are made."),
         )
