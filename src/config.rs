@@ -229,7 +229,7 @@ mod tests {
 
     #[test]
     fn bump_arg_only() {
-        let input = vec!["cargo-bump", "bump"];
+        let input = vec!["cargo-bump"];
         let config = Config {
             version_modifier: VersionModifier::from_mod_type(ModifierType::Patch),
             ..Default::default()
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn version_arg_minor() {
-        let input = vec!["cargo-bump", "bump", "minor"];
+        let input = vec!["cargo-bump", "minor"];
         let config = Config {
             version_modifier: VersionModifier::from_mod_type(ModifierType::Minor),
             ..Default::default()
@@ -249,7 +249,7 @@ mod tests {
 
     #[test]
     fn version_arg_string_good() {
-        let input = vec!["cargo-bump", "bump", "1.2.3"];
+        let input = vec!["cargo-bump", "1.2.3"];
         let config = Config {
             version_modifier: VersionModifier::from_mod_type(ModifierType::Replace(
                 Version::parse("1.2.3").unwrap(),
@@ -261,11 +261,11 @@ mod tests {
 
     #[test]
     fn version_bump_and_build() {
-        let input = vec!["cargo-bump", "bump", "major", "--build", "1999"];
+        let input = vec!["cargo-bump", "major", "--build", "1999"];
         let config = Config {
             version_modifier: VersionModifier {
                 mod_type: ModifierType::Major,
-                build_metadata: Some(vec![Identifier::Numeric(1999)]),
+                build_metadata: BuildMetadata::from_str("1999").ok(),
                 pre_release: None,
             },
             ..Default::default()
@@ -275,12 +275,12 @@ mod tests {
 
     #[test]
     fn version_bump_and_pre() {
-        let input = vec!["cargo-bump", "bump", "2.0.0", "--pre-release", "beta"];
+        let input = vec!["cargo-bump", "2.0.0", "--pre-release", "beta"];
         let config = Config {
             version_modifier: VersionModifier {
                 mod_type: ModifierType::Replace(Version::parse("2.0.0").unwrap()),
                 build_metadata: None,
-                pre_release: Some(vec![Identifier::AlphaNumeric(String::from("beta"))]),
+                pre_release: Prerelease::from_str("beta").ok(),
             },
             ..Default::default()
         };
