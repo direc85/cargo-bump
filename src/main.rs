@@ -45,7 +45,7 @@ fn main() {
 
     if !&conf.ignore_lockfile {
         Command::new("cargo")
-        .args(&["generate-lockfile", "--offline", "--manifest-path", &conf.manifest.to_string_lossy()])
+        .args(["generate-lockfile", "--offline", "--manifest-path", &conf.manifest.to_string_lossy()])
         .status()
         .expect("Failed to generate lockfile");
     }

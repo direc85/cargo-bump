@@ -2,7 +2,7 @@ use std::process::Command;
 
 pub fn git_check() {
     let output = Command::new("git")
-        .args(&["status", "--porcelain"])
+        .args(["status", "--porcelain"])
         .output()
         .expect("This tool requires git. Please install git and try again.");
     if !output.stdout.is_empty() {
@@ -12,14 +12,14 @@ pub fn git_check() {
 
 pub fn git_tag(version: &str) {
     Command::new("git")
-        .args(&["tag", "-am", version, version])
+        .args(["tag", "-am", version, version])
         .status()
         .expect("Something went wrong when creating a git tag.");
 }
 
 pub fn git_commit(version: &str) {
     Command::new("git")
-        .args(&["commit", "-am", version])
+        .args(["commit", "-am", version])
         .status()
         .expect("Something went wrong trying to commit the new version.");
 }
