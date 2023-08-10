@@ -1,6 +1,7 @@
+# cargo-bump
+
 [![crates.io](https://img.shields.io/crates/v/cargo-bump.svg)](https://crates.io/crates/cargo-bump)
 [![build status](https://travis-ci.org/wraithan/cargo-bump.svg?branch=master)](https://travis-ci.org/wraithan/cargo-bump)
-# cargo-bump
 
 This adds the command `cargo bump` which bumps the current version in your
 `Cargo.toml`.
@@ -24,7 +25,7 @@ Set the version number directly: `cargo bump 13.3.7`
 
 ## usage
 
-```
+```text
 USAGE:
     cargo bump [<version> | major | minor | patch] [FLAGS]
 
