@@ -14,6 +14,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
 use toml_edit::Document;
+use std::process::Command;
 
 use semver::Version;
 
@@ -40,6 +41,13 @@ fn main() {
 
     if run_build {
         build::run();
+    }
+
+    if !&conf.ignore_lockfile {
+        Command::new("cargo")
+        .args(&["generate-lockfile", "--offline", "--manifest-path", &conf.manifest.to_string_lossy()])
+        .status()
+        .expect("Failed to generate lockfile");
     }
 
     if use_git {
@@ -408,7 +416,7 @@ a = true";
 
 
     version= $VERSION
-    
+
     ";
         let mod_type = "4.0.0".parse().expect("version modifier");
         toml_test_wrapper(
