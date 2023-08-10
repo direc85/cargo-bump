@@ -234,57 +234,73 @@ mod tests {
     use super::*;
     use std::env;
 
-    fn test_config(input: Vec<&str>, version_mod: VersionModifier) {
+    fn test_config(input: Vec<&str>, expected_config: &Config) {
         let parser = build_cli_parser();
         let root = env::current_dir().unwrap();
         let mut manifest = root.clone();
         manifest.push("Cargo.toml");
         let matches = parser.get_matches_from_safe(input).unwrap();
         let config = Config::from_matches(matches);
-        assert_eq!(config.version_modifier, version_mod);
-        assert_eq!(config.manifest, manifest);
+        assert_eq!(&config, expected_config);
     }
 
     #[test]
     fn bump_arg_only() {
         let input = vec!["cargo-bump", "bump"];
-        test_config(input, VersionModifier::from_mod_type(ModifierType::Patch))
+        let config = Config {
+            version_modifier: VersionModifier::from_mod_type(ModifierType::Patch),
+            ..Default::default()
+        };
+        test_config(input, &config)
     }
 
     #[test]
     fn version_arg_minor() {
         let input = vec!["cargo-bump", "bump", "minor"];
-        test_config(input, VersionModifier::from_mod_type(ModifierType::Minor))
+        let config = Config {
+            version_modifier: VersionModifier::from_mod_type(ModifierType::Minor),
+            ..Default::default()
+        };
+        test_config(input, &config)
     }
 
     #[test]
     fn version_arg_string_good() {
         let input = vec!["cargo-bump", "bump", "1.2.3"];
-        test_config(
-            input,
-            VersionModifier::from_mod_type(ModifierType::Replace(Version::parse("1.2.3").unwrap())),
-        )
+        let config = Config {
+            version_modifier: VersionModifier::from_mod_type(ModifierType::Replace(
+                Version::parse("1.2.3").unwrap(),
+            )),
+            ..Default::default()
+        };
+        test_config(input, &config)
     }
 
     #[test]
     fn version_bump_and_build() {
         let input = vec!["cargo-bump", "bump", "major", "--build", "1999"];
-        let version_mod = VersionModifier {
-            mod_type: ModifierType::Major,
-            build_metadata: Some(vec![Identifier::Numeric(1999)]),
-            pre_release: None,
+        let config = Config {
+            version_modifier: VersionModifier {
+                mod_type: ModifierType::Major,
+                build_metadata: Some(vec![Identifier::Numeric(1999)]),
+                pre_release: None,
+            },
+            ..Default::default()
         };
-        test_config(input, version_mod);
+        test_config(input, &config);
     }
 
     #[test]
     fn version_bump_and_pre() {
         let input = vec!["cargo-bump", "bump", "2.0.0", "--pre-release", "beta"];
-        let version_mod = VersionModifier {
-            mod_type: ModifierType::Replace(Version::parse("2.0.0").unwrap()),
-            build_metadata: None,
-            pre_release: Some(vec![Identifier::AlphaNumeric(String::from("beta"))]),
+        let config = Config {
+            version_modifier: VersionModifier {
+                mod_type: ModifierType::Replace(Version::parse("2.0.0").unwrap()),
+                build_metadata: None,
+                pre_release: Some(vec![Identifier::AlphaNumeric(String::from("beta"))]),
+            },
+            ..Default::default()
         };
-        test_config(input, version_mod);
+        test_config(input, &config);
     }
 }
