@@ -16,10 +16,10 @@ fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
         .version(VERSION)
         .author("Wraithan McCarroll <xwraithanx@gmail.com>")
         .usage(
-            "cargo bump [<version> | major | minor | patch] [FLAGS]
+            "cargo bump <VERSION | major | minor | patch> [FLAGS]
 
-    Version parts: ${MAJOR}.${MINOR}.${PATCH}-${PRE-RELEASE}+${BUILD}
-    Example: 3.1.4-alpha+159",
+    Version parts: ${PREFIX}${MAJOR}.${MINOR}.${PATCH}-${PRE-RELEASE}+${BUILD}
+    Example: v3.1.4-alpha+159",
         )
         .about("Increments the version number in Cargo.toml as specified.")
         .setting(AppSettings::ArgRequiredElseHelp)
@@ -38,19 +38,18 @@ fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
                 .long("manifest-path")
                 .value_name("PATH")
                 .takes_value(true)
-                .help("Optional path to Cargo.toml"),
+                .help("Path to Cargo.toml"),
         )
-        .arg(Arg::with_name("version").index(2).help(
-            "Version should be a semver (https://semver.org/) string or the \
-             position of the current version to increment: major, minor or patch.",
+        .arg(Arg::with_name("VERSION").index(2).help(
+            "Must be 'major', 'minor', 'patch' or a semantic version string: https://semver.org",
         ))
         .arg(
             Arg::with_name("pre-release")
                 .short("p")
                 .long("pre-release")
-                .value_name("RELEASE TYPE")
+                .value_name("PRE-RELEASE")
                 .takes_value(true)
-                .help("Optional pre-release information."),
+                .help("Add pre-release part to version, e.g. 'beta'"),
         )
         .arg(
             Arg::with_name("build-metadata")
@@ -58,32 +57,32 @@ fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
                 .long("build")
                 .value_name("BUILD")
                 .takes_value(true)
-                .help("Optional build metadata for this version."),
+                .help("Add build part to version, e.g. 'dirty'"),
         )
         .arg(
             Arg::with_name("git-tag")
                 .short("g")
                 .long("git-tag")
-                .help("Optional commit the updated version and create a git tag."),
+                .help("Commit the updated version and create a git tag"),
         )
         .arg(
             Arg::with_name("run-build")
                 .short("r")
                 .long("run-build")
-                .help("Optional run `cargo build` before handling any git logic.
-                This has the added benefit of fixing the Cargo.lock before the git commits are made."),
+                .help("Require `cargo build` to succeed (and update Cargo.lock) before running git actions"),
         )
         .arg(
             Arg::with_name("tag-prefix")
                 .short("t")
                 .long("tag-prefix")
+                .value_name("PREFIX")
                 .takes_value(true)
-                .help("Optional prefix to the git-tag, this will force the git-tag option"),
+                .help("Prefix to the git-tag, e.g. 'v' (implies --git-tag)"),
         )
         .arg(
             Arg::with_name("ignore-lockfile")
                 .long("ignore-lockfile")
-                .help("Don't update the lockfile")
+                .help("Don't update Cargo.lock")
         )
 }
 

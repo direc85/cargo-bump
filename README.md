@@ -27,25 +27,24 @@ Set the version number directly: `cargo bump 13.3.7`
 
 ```text
 USAGE:
-    cargo bump [<version> | major | minor | patch] [FLAGS]
+    cargo bump <VERSION | major | minor | patch> [FLAGS]
 
-    Version parts: ${MAJOR}.${MINOR}.${PATCH}-${PRE-RELEASE}+${BUILD}
-    Example: 3.1.4-alpha+159
+    Version parts: ${PREFIX}${MAJOR}.${MINOR}.${PATCH}-${PRE-RELEASE}+${BUILD}
+    Example: v3.1.4-alpha+159
 
 FLAGS:
-    -g, --git-tag     Optional commit the updated version and create a git tag.
-    -h, --help        Prints help information
-    -r, --run-build   Optional run `cargo build` before handling any git logic.
-                                      This has the added benefit of fixing the Cargo.lock before the git commits are
-                      made.
-    -v, --version     Prints version information
+    -g, --git-tag            Commit the updated version and create a git tag
+    -h, --help               Prints help information
+        --ignore-lockfile    Don't update Cargo.lock
+    -r, --run-build          Require `cargo build` to succeed (and update Cargo.lock) before running git actions
+    -v, --version            Prints version information
 
 OPTIONS:
-    -b, --build <BUILD>                 Optional build metadata for this version.
-        --manifest-path <PATH>          Optional path to Cargo.toml
-    -p, --pre-release <RELEASE TYPE>    Optional pre-release information.
+    -b, --build <BUILD>                Add build part to version, e.g. 'dirty'
+        --manifest-path <PATH>         Path to Cargo.toml
+    -p, --pre-release <PRE-RELEASE>    Add pre-release part to version, e.g. 'beta'
+    -t, --tag-prefix <PREFIX>          Prefix to the git-tag, e.g. 'v' (implies --git-tag)
 
 ARGS:
-    <version>    Version should be a semver (https://semver.org/) string or the position of the current version to
-                 increment: major, minor or patch.
+    <VERSION>    Must be 'major', 'minor', 'patch' or a semantic version string: https://semver.org
 ```
