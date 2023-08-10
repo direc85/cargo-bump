@@ -217,14 +217,28 @@ mod tests {
     use super::*;
     use std::env;
 
-    fn test_config(input: Vec<&str>, expected_config: &Config) {
-        let parser = build_cli_parser();
-        let root = env::current_dir().unwrap();
-        let mut manifest = root.clone();
+    #[test]
+    fn verify_defaults() {
+        let mut manifest: PathBuf = env::current_dir().unwrap();
         manifest.push("Cargo.toml");
-        let matches = parser.get_matches_from_safe(input).unwrap();
-        let config = Config::from_matches(matches);
-        assert_eq!(&config, expected_config);
+        let defaults = Config {
+            version_modifier: VersionModifier {
+                build_metadata: None,
+                mod_type: ModifierType::Patch,
+                pre_release: None,
+            },
+            manifest,
+            git_tag: false,
+            run_build: false,
+            prefix: "".into(),
+            ignore_lockfile: false,
+        };
+
+        let generated = Config {
+            ..Default::default()
+        };
+
+        assert_eq!(generated, defaults);
     }
 
     #[test]
@@ -234,7 +248,8 @@ mod tests {
             version_modifier: VersionModifier::from_mod_type(ModifierType::Patch),
             ..Default::default()
         };
-        test_config(input, &config)
+        let parsed = Config::parse(Arguments::parse_from(input.into_iter()));
+        assert_eq!(config, parsed);
     }
 
     #[test]
@@ -244,7 +259,8 @@ mod tests {
             version_modifier: VersionModifier::from_mod_type(ModifierType::Minor),
             ..Default::default()
         };
-        test_config(input, &config)
+        let parsed = Config::parse(Arguments::parse_from(input.into_iter()));
+        assert_eq!(config, parsed);
     }
 
     #[test]
@@ -256,7 +272,8 @@ mod tests {
             )),
             ..Default::default()
         };
-        test_config(input, &config)
+        let parsed = Config::parse(Arguments::parse_from(input.into_iter()));
+        assert_eq!(config, parsed);
     }
 
     #[test]
@@ -270,7 +287,8 @@ mod tests {
             },
             ..Default::default()
         };
-        test_config(input, &config);
+        let parsed = Config::parse(Arguments::parse_from(input.into_iter()));
+        assert_eq!(config, parsed);
     }
 
     #[test]
@@ -284,6 +302,7 @@ mod tests {
             },
             ..Default::default()
         };
-        test_config(input, &config);
+        let parsed = Config::parse(Arguments::parse_from(input.into_iter()));
+        assert_eq!(config, parsed);
     }
 }
