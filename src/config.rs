@@ -1,89 +1,55 @@
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 use cargo_metadata::MetadataCommand;
-use clap::{App, AppSettings, Arg, ArgMatches};
+use clap::{ArgAction, Parser};
 use semver::{Identifier, SemVerError, Version};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-pub fn get_config() -> Config {
-    let matches = build_cli_parser().get_matches();
-    Config::from_matches(matches)
-}
+const USAGE: &str = "cargo bump <SEMVER | major | minor | patch> [FLAGS]";
 
-fn build_cli_parser<'a, 'b>() -> App<'a, 'b> {
-    App::new("cargo-bump")
-        .version(VERSION)
-        .author("Wraithan McCarroll <xwraithanx@gmail.com>")
-        .usage(
-            "cargo bump <VERSION | major | minor | patch> [FLAGS]
+#[derive(Parser, Debug)]
+#[clap(author, about, version, long_about = None)]
+#[clap(override_usage = USAGE)]
+#[clap(help_template = "\
+{before-help}{name} {version}
+{author-with-newline}{about-with-newline}
+{usage-heading} {usage}
 
-    Version parts: ${PREFIX}${MAJOR}.${MINOR}.${PATCH}-${PRE-RELEASE}+${BUILD}
-    Example: v3.1.4-alpha+159",
-        )
-        .about("Increments the version number in Cargo.toml as specified.")
-        .setting(AppSettings::ArgRequiredElseHelp)
-        .version_short("v")
-        .arg(
-            // This is because when we're called from cargo,
-            // our first arg is the command we were calld as.
-            Arg::with_name("bump")
-                .possible_value("bump")
-                .index(1)
-                .required(true)
-                .hidden(true),
-        )
-        .arg(
-            Arg::with_name("manifest-path")
-                .long("manifest-path")
-                .value_name("PATH")
-                .takes_value(true)
-                .help("Path to Cargo.toml"),
-        )
-        .arg(Arg::with_name("VERSION").index(2).help(
-            "Must be 'major', 'minor', 'patch' or a semantic version string: https://semver.org",
-        ))
-        .arg(
-            Arg::with_name("pre-release")
-                .short("p")
-                .long("pre-release")
-                .value_name("PRE-RELEASE")
-                .takes_value(true)
-                .help("Add pre-release part to version, e.g. 'beta'"),
-        )
-        .arg(
-            Arg::with_name("build-metadata")
-                .short("b")
-                .long("build")
-                .value_name("BUILD")
-                .takes_value(true)
-                .help("Add build part to version, e.g. 'dirty'"),
-        )
-        .arg(
-            Arg::with_name("git-tag")
-                .short("g")
-                .long("git-tag")
-                .help("Commit the updated version and create a git tag"),
-        )
-        .arg(
-            Arg::with_name("run-build")
-                .short("r")
-                .long("run-build")
-                .help("Require `cargo build` to succeed (and update Cargo.lock) before running git actions"),
-        )
-        .arg(
-            Arg::with_name("tag-prefix")
-                .short("t")
-                .long("tag-prefix")
-                .value_name("PREFIX")
-                .takes_value(true)
-                .help("Prefix to the git-tag, e.g. 'v' (implies --git-tag)"),
-        )
-        .arg(
-            Arg::with_name("ignore-lockfile")
-                .long("ignore-lockfile")
-                .help("Don't update Cargo.lock")
-        )
+    Version: ${PREFIX}${MAJOR}.${MINOR}.${PATCH}-${PRE-RELEASE}+${BUILD}
+    Example: v3.1.4-alpha+159
+
+{all-args}{after-help}
+")]
+struct Arguments {
+    /// Must be 'major', 'minor', 'patch' or a semantic version string: https://semver.org
+    semver: Option<String>,
+
+    /// Path to Cargo.toml
+    #[clap(value_name = "PATH", long = "manitest-path")]
+    manifest_path: Option<String>,
+
+    /// Add pre-release part to version, e.g. 'beta'
+    #[clap(short = 'p', long = "pre-release", value_name = "PRE-RELEASE")]
+    pre_release: Option<String>,
+
+    /// Add build part to version, e.g. 'dirty'
+    #[clap(short = 'b', long = "build", value_name = "BUILD")]
+    build_metadata: Option<String>,
+
+    /// Commit the updated version and create a git tag
+    #[clap(action = ArgAction::SetTrue, short = 'g', long = "git-tag")]
+    git_tag: Option<bool>,
+
+    /// Require `cargo build` to succeed (and update Cargo.lock) before running git actions
+    #[clap(action = ArgAction::SetTrue, short = 'r', long = "run-build")]
+    run_build: Option<bool>,
+
+    /// Prefix to the git-tag, e.g. 'v' (implies --git-tag)
+    #[clap(short = 't', long = "tag-prefix", value_name = "PREFIX")]
+    tag_prefix: Option<String>,
+
+    /// Don't update Cargo.lock
+    #[clap(action = ArgAction::SetTrue, long = "ignore-lockfile")]
+    ignore_lockfile: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -98,14 +64,14 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let mut metadata_cmd = MetadataCommand::new();
+        let metadata_cmd = MetadataCommand::new();
         let metadata = metadata_cmd.exec().expect("get cargo metadata");
         let manifest = metadata[metadata
             .workspace_members
             .first()
             .expect("get workspace members")]
-        .manifest_path
-        .to_owned();
+            .manifest_path
+            .to_owned();
         let version_modifier = VersionModifier {
             mod_type: ModifierType::Patch,
             build_metadata: None,
@@ -114,7 +80,7 @@ impl Default for Config {
 
         Config {
             version_modifier,
-            manifest,
+            manifest: manifest.into(),
             git_tag: false,
             run_build: false,
             prefix: "".into(),
@@ -124,23 +90,52 @@ impl Default for Config {
 }
 
 impl Config {
-    fn from_matches(matches: ArgMatches) -> Config {
-        let mod_type = ModifierType::from_str(matches.value_of("VERSION").unwrap_or("patch"))
-            .expect("Invalid semver version, expected version or major, minor, patch");
-        let build_metadata = matches.value_of("build-metadata").map(parse_identifiers);
-        let pre_release = matches.value_of("pre-release").map(parse_identifiers);
-        let run_build = matches.is_present("run-build");
-        let mut git_tag = matches.is_present("git-tag");
-        let prefix = match matches.value_of("tag-prefix") {
+    pub fn from_os_args() -> Config {
+        // This is a bit ugly, but we can't use 'bump: String' in Arguments,
+        // because it makes Clap ignore '--help' altogether.
+        let arguments = if std::env::args_os().len() < 2
+            || std::env::args_os().position(|a| a == "bump") != Some(1)
+            || std::env::args_os().any(|a| a == "--help")
+        {
+            Arguments::parse_from(["bump", "--help"])
+        } else {
+            Arguments::parse_from(std::env::args_os().skip(1))
+        };
+        Config::parse(arguments)
+    }
+
+    fn parse(arguments: Arguments) -> Config {
+        let mod_type =
+            match ModifierType::from_str(&arguments.semver.unwrap_or_else(|| "patch".into())) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("Invalid semver version, expected version or major, minor, patch:");
+                    eprintln!("{}", e);
+                    std::process::exit(1);
+                }
+            };
+        let run_build = arguments.run_build.unwrap_or(false);
+        let mut git_tag = arguments.git_tag.unwrap_or(false);
+
+        let build_metadata = match arguments.build_metadata {
+            Some(s) => BuildMetadata::from_str(&s).ok(),
+            None => None,
+        };
+        let pre_release = match arguments.pre_release {
+            Some(s) => Prerelease::from_str(&s).ok(),
+            None => None,
+        };
+
+        let prefix = match arguments.tag_prefix {
             Some(prefix) => {
                 git_tag = true;
-                prefix.to_string()
+                prefix
             }
             None => "".to_string(),
         };
-        let ignore_lockfile = matches.is_present("ignore-lockfile");
+        let ignore_lockfile = arguments.ignore_lockfile.unwrap_or(false);
         let mut metadata_cmd = MetadataCommand::new();
-        if let Some(path) = matches.value_of("manifest-path") {
+        if let Some(path) = arguments.manifest_path {
             metadata_cmd.manifest_path(path);
         }
         let metadata = metadata_cmd.exec().expect("get cargo metadata");
@@ -163,19 +158,6 @@ impl Config {
             panic!("Workspaces are not supported yet.");
         }
     }
-}
-
-fn parse_identifiers(value: &str) -> Vec<Identifier> {
-    value
-        .split('.')
-        .map(|identifier| {
-            if let Ok(i) = identifier.parse() {
-                Identifier::Numeric(i)
-            } else {
-                Identifier::AlphaNumeric(identifier.to_string())
-            }
-        })
-        .collect()
 }
 
 #[derive(Debug, Clone, PartialEq)]

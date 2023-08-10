@@ -10,6 +10,7 @@ mod config;
 mod git;
 mod version;
 
+use config::Config;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
@@ -19,7 +20,7 @@ use toml_edit::Document;
 use semver::Version;
 
 fn main() {
-    let conf = config::get_config();
+    let conf = Config::from_os_args();
     let raw_data = read_file(&conf.manifest);
     let use_git = conf.git_tag;
     let run_build = conf.run_build;
